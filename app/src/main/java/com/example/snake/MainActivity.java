@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     int numSquaresVertical;
     int[] squares;
 
+    int botSnakeCount=0;
     int [] botSnakes; // <--- The head location and size of other snakes that are in play will be stored in here
     int botSnakeColour = Color.RED;
 
@@ -89,13 +90,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-/*    void cutTail(){
-        cutTail = tail.get(0);
-        squares[xYToOne(cutTail.x,cutTail.y)]=0;
-        tail.remove(0);
-        drawSquareAdapter(gameSpace,cutTail.x,cutTail.y,(int)drawScaleX,(int)drawScaleY,Color.BLACK);
-
-    }*/
 int xYToOne(int x, int y){
         return (y*numSquaresHorizontal)+x;
 
@@ -160,23 +154,44 @@ int xYToOne(int x, int y){
     int score =0;
     int bonus=1;
     void updateScore(){
-        score= score+bonus;
+        score= score+botSnakeCount;
         textViewScore.setText(" "+score);
     }
+    void splitSnakeOff(int lengthOfNewSNake){
+        if (lengthOfNewSNake>3){
+        boolean  validNewSnake=false;
+        int newSnakeLocation =-1;
+        for (int i =0;i<squares.length;i++){
+            if (squares[i]==lengthOfNewSNake){
+                newSnakeLocation = i;
+                validNewSnake=true;
+            }
+            if (squares[i]!=0&&squares[i]<=lengthOfNewSNake){
+                updateSquare(i,botSnakeColour);
+            }
+            if(squares[i]>lengthOfNewSNake){
+                squares[i]-=lengthOfNewSNake;
+            }
+        }
+        if (validNewSnake)
+        {
+            tail = tail- lengthOfNewSNake;
+            newBotSnake(newSnakeLocation,lengthOfNewSNake);
+        }
+        }
+    }
     void growSnake(){
+        if (botSnakeCount<1&&tail>7){
+            splitSnakeOff(tail/2);
+        }
         tail++;
+
         updateScore();
         speedIncrease();
         newSnakeFood();
     }
     void speedIncrease(){
         timerShorter();
-    }
-    void printArray(int [] array){
-        String s = ")-";
-        for (int i =0; i<array.length;i++)
-            s = s +" "+array[i];
-        System.out.println(s);
     }
     void newSnakeFood(){
 
@@ -202,7 +217,7 @@ int xYToOne(int x, int y){
         drawSquareAdapter(gameSpace,x,y,(int)drawScaleX,(int)drawScaleY,Colour);
 
     }
-    int timerLength=100;
+    int timerLength=500;
     void timerShorter(){
         if (timerLength>20){
             timerLength=timerLength - timerLength/5;
@@ -226,14 +241,10 @@ int xYToOne(int x, int y){
             }
         }
 
-
-        // Redraw Food:
-       /* int x = foodIsAt% numSquaresHorizontal;
-        int y = foodIsAt/numSquaresHorizontal;
-        drawSquareAdapter(gameSpace,x,y,(int)drawScaleX,(int)drawScaleY,Colour);*/
     }
     int botSnakesOffset=0;
     void newBotSnake(int location,int length){
+        botSnakeCount++;
         int i =0;
         for (;i<botSnakesOffset;i++){
             if (botSnakes[i]==-1)
@@ -297,8 +308,108 @@ int xYToOne(int x, int y){
         }
 
     }
+
+    int movePreferenceEuclideanDistance(int location, int movementType){
+
+        int xLocation = (location%numSquaresHorizontal)+1;
+        int foodX = (foodIsAt%numSquaresHorizontal)+1;
+        int yLocation = (location/numSquaresHorizontal)+1;
+        int foodY = (foodIsAt/numSquaresHorizontal)+1;
+
+        boolean rightIsPreferableToLeft = false;
+        boolean downIsPreferableToUp =false;
+        int distanceToFoodXPlane;
+        int distanceToFoodYPlane;
+
+        if (xLocation<foodX){
+            distanceToFoodXPlane = foodX-xLocation;
+            rightIsPreferableToLeft=true;
+        }else {
+            distanceToFoodXPlane = xLocation-foodX;
+        }
+        if (yLocation<foodY){
+            distanceToFoodYPlane = foodY-yLocation;
+            downIsPreferableToUp=true;
+        }else {
+            distanceToFoodYPlane = yLocation-foodY;
+        }
+        if (!(movementType==2)){
+        if (distanceToFoodXPlane>numSquaresHorizontal/2){
+            if (rightIsPreferableToLeft){
+                rightIsPreferableToLeft= false;
+                distanceToFoodXPlane = numSquaresHorizontal-foodX+xLocation;
+            }else{
+                rightIsPreferableToLeft=true;
+                distanceToFoodXPlane = numSquaresHorizontal-xLocation+foodX;
+            }
+        }
+
+        if (distanceToFoodYPlane>numSquaresVertical/2){
+            if (downIsPreferableToUp){
+                downIsPreferableToUp= false;
+                distanceToFoodYPlane = numSquaresVertical-foodY+yLocation;
+            }else{
+                downIsPreferableToUp=true;
+                distanceToFoodYPlane = numSquaresVertical-yLocation+foodY;
+            }
+        }}
+
+        if (movementType==0){
+            if (distanceToFoodXPlane>0){
+                if (rightIsPreferableToLeft){
+                    return getSquareRight(location);
+                }
+                return getSquareLeft(location);
+            }else{
+                if (downIsPreferableToUp){
+                    return getSquareBelow(location);
+                }
+
+                return getSquareAbove(location);
+            }
+        }else{
+            if (distanceToFoodXPlane>=distanceToFoodYPlane){
+                if (rightIsPreferableToLeft){
+                    return getSquareRight(location);
+                }
+                return getSquareLeft(location);
+            }else{
+                if (downIsPreferableToUp){
+                    return getSquareBelow(location);
+                }
+
+                return getSquareAbove(location);
+            }
+        }
+
+    }
+
+    int lookAheadAFewMoves(int location, int numberOfLayersStillToLookAt){
+        Set<Integer> placesToMove = new HashSet<>();
+        return lookAheadAFewMoves(location, numberOfLayersStillToLookAt,0,placesToMove);
+
+    }
+    int lookAheadAFewMoves(int location, int numberOfLayersStillToLookAt,int numberOfLayersLookedAt, Set<Integer> placesToMove){
+        if (numberOfLayersStillToLookAt==0
+                || squares[location]>numberOfLayersLookedAt
+                || placesToMove.contains(location))
+        {
+            return 0;
+        }
+
+        placesToMove.add(location);
+        int tileCounter=1;
+
+        tileCounter += lookAheadAFewMoves(getSquareAbove(location),numberOfLayersStillToLookAt-1,numberOfLayersLookedAt+1,placesToMove);
+        tileCounter += lookAheadAFewMoves(getSquareBelow(location),numberOfLayersStillToLookAt-1,numberOfLayersLookedAt+1,placesToMove);
+        tileCounter += lookAheadAFewMoves(getSquareLeft(location),numberOfLayersStillToLookAt-1,numberOfLayersLookedAt+1,placesToMove);
+        tileCounter += lookAheadAFewMoves(getSquareRight(location),numberOfLayersStillToLookAt-1,numberOfLayersLookedAt+1,placesToMove);
+
+        return tileCounter;// <--to do
+    }
+
     void chooseBotMoveSnake(int location, int BSArrayPointer){
-        System.out.println("--- running : " +location);
+
         Set<Integer> placesToMove = new HashSet<>();
         // if there is food nearby
         findMoves(location,2,placesToMove);
@@ -306,11 +417,35 @@ int xYToOne(int x, int y){
         if (placesToMove.size()>=1){
             if (placesToMove.size()==1){
                 moveBotSnake(placesToMove.toArray(new Integer[1])[0],BSArrayPointer);
-            }else{
-                moveBotSnake(placesToMove.toArray(new Integer[placesToMove.size()])[rand.nextInt(placesToMove.size())],BSArrayPointer);
+            }
+            else
+                {
+                int aGoodMOve = movePreferenceEuclideanDistance(location,botSnakes[BSArrayPointer+botSnakesOffset]%2);
+
+                if (placesToMove.contains(aGoodMOve)
+                        && lookAheadAFewMoves(aGoodMOve,10)>20)
+                {
+                    moveBotSnake(aGoodMOve, BSArrayPointer);
+                }
+                else
+                    {
+
+                    Integer [] moves = placesToMove.toArray(new Integer[placesToMove.size()]);
+                    int lengthofMove =0;
+                    for (int i: moves)
+                    {
+                        int temp = lookAheadAFewMoves(i,10);
+                        if (temp>lengthofMove){
+                            lengthofMove=temp;
+                            aGoodMOve = i;
+                        }
+                    }
+
+                    moveBotSnake(aGoodMOve, BSArrayPointer);
+                }
             }
         }else { // else there is no valid move so kill snake
-            System.out.println("--- Killed : " +placesToMove.size());
+
 
             killBotSnake(BSArrayPointer);
         }
@@ -326,6 +461,7 @@ int xYToOne(int x, int y){
         updateSquare(newLocation,botSnakeColour);
     }
     void killBotSnake(int BSArrayPointer){
+        botSnakeCount =0;
         int i =BSArrayPointer;
         for (;i<botSnakesOffset-1;i++){
             if (botSnakes[i+1]==-1)break;
@@ -363,12 +499,13 @@ int xYToOne(int x, int y){
         botSnakes = new int[squares.length];
         for (int i=0;i<botSnakes.length;i++)
             botSnakes[i] = -1;
-        botSnakesOffset= botSnakes.length/2;
+        botSnakesOffset= botSnakes.length/3;
 
-        newBotSnake(100,10);
-        newBotSnake(200,6);
-        newBotSnake(200,5);
-        newBotSnake(200,4);
+
+
+
+
+
         newSnakeFood();
 
 
