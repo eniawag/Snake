@@ -40,7 +40,10 @@ public class snakeBots {
                 break;;
         }
         botSnakes[i]=location;
-        botSnakes[i+botSnakesOffset]= length;
+        botSnakes[i+botSnakesOffset]= tailMod(length);
+    }
+    int tailMod(int length){
+        return ((1+botSnakeCount)*map.length)+ length;
     }
 
     public void moveBotSnakes(){
