@@ -43,7 +43,21 @@ public class snakeBots {
         botSnakes[i+botSnakesOffset]= tailMod(length);
     }
     int tailMod(int length){
-        return ((1+botSnakeCount)*map.length)+ length;
+        int nom = ((1+botSnakeCount)*map.length);
+        for (int i=0;i<botSnakeCount;i++){
+            if (botSnakes[i+botSnakesOffset]>nom&&botSnakes[i+botSnakesOffset]<nom+map.length){
+                return tailMod(nom-map.length,length);
+            }
+        }
+        return nom + length;
+    }
+    int tailMod(int nom,int length){
+        for (int i=0;i<botSnakeCount;i++){
+            if (botSnakes[i+botSnakesOffset]>nom&&botSnakes[i+botSnakesOffset]<nom+map.length){
+                return tailMod(nom-map.length,length);
+            }
+        }
+        return nom + length;
     }
 
     public void moveBotSnakes(){
@@ -255,7 +269,7 @@ public class snakeBots {
         }
     }
     void killBotSnake(int BSArrayPointer){
-        botSnakeCount =0;
+        botSnakeCount -=1;
         int i =BSArrayPointer;
         for (;i<botSnakesOffset-1;i++){
             if (botSnakes[i+1]==-1)break;
@@ -263,6 +277,7 @@ public class snakeBots {
         botSnakes[BSArrayPointer] = botSnakes[i];
         botSnakes[BSArrayPointer+botSnakesOffset]= botSnakes[i+botSnakesOffset];
         botSnakes[i]=-1;
+        botSnakes[i+botSnakesOffset]=0;
 
     }
 
