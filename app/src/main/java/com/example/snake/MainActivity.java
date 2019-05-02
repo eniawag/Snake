@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
             gameDisplayBitmap.setPixels(colourMappingArray,0,numSquaresHorizontal,0,0,numSquaresHorizontal,numSquaresVertical);
             timerImageView.invalidate();
 
-            timerHandler.postDelayed(this, 7);
+            timerHandler.postDelayed(this, 50);
         }
     };
     void newSnakeFood(int [] map){
@@ -157,9 +157,20 @@ public class MainActivity extends AppCompatActivity {
 
         startActivity(intent);
     }
+    public void launchShadowSnake(View view) {
+        Intent intent = new Intent(this,shadowSnake.class);
+
+        startActivity(intent);
+    }
     @Override
     public void onPause() {
         super.onPause();
         timerHandler.removeCallbacks(timerRunnable);
+    }
+    @Override
+    public void onResume(){
+        super.onResume();
+
+        timerHandler.postDelayed(timerRunnable, 200);
     }
 }

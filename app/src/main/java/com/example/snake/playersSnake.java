@@ -84,7 +84,7 @@ public class playersSnake {
        int headHitA=map[(head.y*numSquaresHorizontal)+head.x];
         if (headHitA>0){
             if (headHitA==food) {
-                growSnake();
+                growSnake(1);
                 iFoundFood=true;
             }else {
                 reStart();
@@ -93,8 +93,8 @@ public class playersSnake {
         map[(head.y*numSquaresHorizontal)+head.x] = tail;
     }
 
-    void growSnake(){
-
+    public void growSnake(int num){
+        tail+=num;
     }
 
     void reStart(){

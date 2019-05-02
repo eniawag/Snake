@@ -14,7 +14,7 @@ import android.widget.TextView;
 
 import java.util.Random;
 
-public class classicSnake extends AppCompatActivity {
+public class shadowSnake extends AppCompatActivity {
 
     //runs without a timer by reposting this handler at the end of the runnable
     Handler timerHandler = new Handler();
@@ -31,22 +31,23 @@ public class classicSnake extends AppCompatActivity {
     int[] squares;
     Drawable GameMap;
     playersSnake player;
+    snakeBots botSnakes;
     int snakeFoodId = 1000000;
     int foodIsAt =0;
     int [] colourMappingArray;
 
     int speedIndex=0;
     int timerLength=315;
-    int [] snakeSpeeds = new int[]{255,230,205,185,165,150,135,120,105,100,90,85,80,75,70,60,50,45,40};
+    int [] snakeSpeeds = new int[]{315,280,255,230,205,185,165,150,135,120,105,100,90,85,80,75,70,60,50,45,40};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_classic_snake);
+        setContentView(R.layout.activity_shadow_snake);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE| View.SYSTEM_UI_FLAG_FULLSCREEN);
         textViewScore = (TextView) findViewById(R.id.textViewScore);
         textViewScore.setTextColor(Color.YELLOW);
         setGameDisplay();
-
+        botSnakes = new snakeBots(squares,numSquaresHorizontal,numSquaresVertical,-1);
         player = new playersSnake(squares,numSquaresHorizontal,numSquaresVertical);
         newSnakeFood(squares);
         colourMappingArray = new int[squares.length];
@@ -54,20 +55,13 @@ public class classicSnake extends AppCompatActivity {
         GameMap.setFilterBitmap(false);
         timerImageView.setImageDrawable(GameMap);
 
-        timerHandler.postDelayed(timerSCRunnable, 1000);
+        timerHandler.postDelayed(timerSSRunnable, 1000);
+        botSnakes.newBotSnake(10,10);
     }
 
-    int score=0;
-    int foodcount=1;
-    void foodWasConsumed(){
-        score= score+speedIndex+1;
-        textViewScore.setText(""+score);
-        foodcount++;
-        if (foodcount>speedIndex){
-            timerShorter();
-            foodcount=0;
-        }
 
+    void foodWasConsumed(){
+        timerShorter();
     }
 
     void newSnakeFood(int [] map){
@@ -75,8 +69,10 @@ public class classicSnake extends AppCompatActivity {
         for (int i=0;i <map.length;i++){
             if (x>=map.length)x=0;
             if (map[x]==0){
+
                 map[x]=snakeFoodId;
                 foodIsAt=x;
+                botSnakes.tellBotsWhereTheFoodIs(x);
                 break;
             }
             x++;
@@ -89,11 +85,20 @@ public class classicSnake extends AppCompatActivity {
             timerLength = snakeSpeeds[speedIndex];
         }
     }
+    void timerLonger(){
+        if (speedIndex>0){
+            speedIndex--;
+            timerLength = snakeSpeeds[speedIndex];
+        }
+    }
+
+
 
     void updateTiles(){
         if (squares[foodIsAt]!=snakeFoodId){
             foodWasConsumed();
             newSnakeFood(squares);
+            botSnakes.tellBotsWhereTheFoodIs(foodIsAt);
             player.thereIsNewFoodToFind();
         }
         for (int i = 0; i< colourMappingArray.length; i++)
@@ -103,8 +108,12 @@ public class classicSnake extends AppCompatActivity {
             }
             if (squares[i]>0){
                 if (squares[i]<snakeFoodId) {
-                   colourMappingArray[i] = Color.GREEN;
-                   squares[i]-=1;
+                    if (squares[i]>squares.length){
+                        colourMappingArray[i]= Color.RED;
+                    }else {
+                        colourMappingArray[i] = Color.GREEN;
+                    }
+                    squares[i]-=1;
                 }else {
                     if (squares[i]==snakeFoodId){
                         colourMappingArray[i]= Color.MAGENTA;
@@ -116,12 +125,13 @@ public class classicSnake extends AppCompatActivity {
         }
         gameDisplayBitmap.setPixels(colourMappingArray,0,numSquaresHorizontal,0,0,numSquaresHorizontal,numSquaresVertical);
     }
-    Runnable timerSCRunnable = new Runnable() {
+    Runnable timerSSRunnable = new Runnable() {
 
         @Override
         public void run() {
             player.movesnake();
             player.detectCollision(squares, snakeFoodId);
+            botSnakes.moveBotSnakes();
             updateTiles();
             timerImageView.invalidate();
 
@@ -163,12 +173,12 @@ public class classicSnake extends AppCompatActivity {
     public void onResume(){
         super.onResume();
 
-        //timerHandler.postDelayed(timerSCRunnable, 200);
+        //timerHandler.postDelayed(timerSSRunnable, 200);
     }
     @Override
     public void onPause() {
         super.onPause();
-        timerHandler.removeCallbacks(timerSCRunnable);
+        timerHandler.removeCallbacks(timerSSRunnable);
     }
     public void rightPressed(View view){
         player.rightPressed();;
